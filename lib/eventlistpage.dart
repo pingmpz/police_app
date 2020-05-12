@@ -14,49 +14,50 @@ class _MyEventListPageState extends State<MyEventListPage> {
   Color icon2Color = Color(0xFF263147);
 
   // !- Filter Values
+  List<String> typeValueList = ['All', '1', '2'];
   String typeValue = 'All';
-  String currentTypeValue = 'All';
+  String typeValueTemp = 'All';
 
-  // !- Test Data
+  // !- For Data
   List<Event> eventList = new List();
-  List<Widget> cards = new List();
+  List<Event> eventListTemp = new List();
 
   @override
   void initState() {
-    testData(); // !- For Test Only
-    setEventList();
+    prepareData(); // !- For Test Only
     super.initState();
   }
 
-  // !- Test Data
-  void testData() {
-    eventList.add(new Event(1, 'Event #1', 'MON 07 AUG 2020 19.04', 1));
-    eventList.add(new Event(2, 'Event #2', 'MON 07 AUG 2020 19.04', 1));
-    eventList.add(new Event(3, 'Event #3', 'MON 07 AUG 2020 19.04', 2));
+  void prepareData() {
+    // !- Test Data
+    eventList.add(new Event(1, 'Event #1', 'This Event is type 1', 1));
+    eventList.add(new Event(2, 'Event #2', 'This Event is type 1', 1));
+    eventList.add(new Event(3, 'Event #3', 'This Event is type 2', 2));
+    eventList.add(new Event(3, 'Event #4', 'This Event is type 3', 3));
+
+    eventListTemp = List.from(eventList);
   }
 
   void setEventList() {
-    cards.clear();
-    for (int i = 0; i < eventList.length; i++) {
-      cards.add(
-        Card(
-          child: ListTile(
-              title: Text(eventList[i].title),
-              subtitle: Text(eventList[i].subtitle),
-              onTap: () {
-                // !- F
-              }),
-        ),
-      );
-    }
+    setState(() {
+      eventList = List.from(eventListTemp);
+      if (typeValue != typeValueList[0]) {
+        for (int i = 0; i < eventList.length; i++) {
+          if (eventList[i].type.toString() != typeValue) {
+            eventList.removeAt(i);
+            i--;
+          }
+        }
+      }
+    });
   }
 
-  // For Filter Only
+  // !- For Filter Only
   Widget _buildSpace() {
     return SizedBox(width: 10, height: 10);
   }
 
-  List<Widget> mapDropdownButtonList(List<String> list){
+  List<Widget> mapDropdownButtonList(List<String> list) {
     return list.map<DropdownMenuItem<String>>((String value) {
       return DropdownMenuItem<String>(
         value: value,
@@ -65,16 +66,15 @@ class _MyEventListPageState extends State<MyEventListPage> {
     }).toList();
   }
 
-  void setFilterValues(bool reverse){
-    if(!reverse){
-      currentTypeValue = typeValue;
+  void setFilterValues(bool isCancel) {
+    if (!isCancel) {
+      typeValueTemp = typeValue;
     } else {
-      typeValue = currentTypeValue;
+      typeValue = typeValueTemp;
     }
   }
 
   createFilterBox(BuildContext context) async {
-    setFilterValues(false);
     return await showDialog<void>(
         context: context,
         builder: (context) {
@@ -89,7 +89,7 @@ class _MyEventListPageState extends State<MyEventListPage> {
                     _buildSpace(),
                     DropdownButton<String>(
                       value: typeValue,
-                      items: mapDropdownButtonList(['All', '1', '2']),
+                      items: mapDropdownButtonList(typeValueList),
                       onChanged: (String value) {
                         setState(() {
                           typeValue = value;
@@ -103,17 +103,18 @@ class _MyEventListPageState extends State<MyEventListPage> {
             actions: <Widget>[
               FlatButton(
                 child: const Text('Confirm'),
-                onPressed: (){
+                onPressed: () {
+                  setFilterValues(false);
+                  setEventList();
                   Navigator.pop(context);
-                  print(typeValue);
                 },
               ),
               FlatButton(
                 child: const Text('Cancel'),
                 onPressed: () {
                   setFilterValues(true);
+                  setEventList();
                   Navigator.pop(context);
-                  print(typeValue);
                 },
               ),
             ],
@@ -151,12 +152,20 @@ class _MyEventListPageState extends State<MyEventListPage> {
           ],
         ),
         body: Center(
-          child: ListView(
-            children: cards,
-          ),
+          child: ListView.builder(
+              itemCount: eventList.length,
+              itemBuilder: (BuildContext context, int i) {
+                return Card(
+                  child: ListTile(
+                      title: Text(eventList[i].title),
+                      subtitle: Text(eventList[i].subtitle),
+                      onTap: () {
+                        // !- F
+                      }),
+                );
+              }),
         ),
       ),
     );
   }
 }
-
